@@ -1,3 +1,13 @@
+
+   /* 
+   * Ein Button wird angeschlossen und entprellt. 
+   * Jeder Buttonklick ruft einen Wechsel zu einem neuen Zustand hervor. 
+   * Jeder Zustand hat eine eigene Methode. 
+   * Ein LCD wird über I2C angeschlossen. 
+   * Zu jedem Zustand kann das LCD Informationen anzeigen. 
+   */
+   
+
 #include <Wire.h> 
 #include <LiquidCrystal_I2C.h>
 #include <Bounce2.h>  // Include Bounce2 library
