@@ -22,7 +22,7 @@ const int LCD_ADDRESS = 0x27;
 const int LCD_COLUMNS = 16;
 const int LCD_ROWS = 2;
 const int BUTTON_PIN = 4;
-const int DEBOUNCE_INTERVAL = 5; // in Millisekunden
+const int DEBOUNCE_INTERVAL = 10; // in Millisekunden
 
 // Die Softwareobjekte
 LiquidCrystal_I2C lcd(LCD_ADDRESS, LCD_COLUMNS, LCD_ROWS);  // set the LCD address to 0x27 for a 16 chars and 2 line display
@@ -54,7 +54,7 @@ void workStateFifth();
 void workStateSixth();
 void workStates();
 void lcdPrint(const char* line1, const char* line2);
-void printDateTime(const RtcDateTime& dt);
+void printLCDdateTime(const RtcDateTime& dt);
 
 // Typdefinition des Pointers auf die Liste der Zustandsfunktionen
 typedef void (*StateFunction)();
@@ -79,8 +79,8 @@ void setup() {
   // RealTimeClock starten
   rtc.Begin();
   RtcDateTime compiled = RtcDateTime(__DATE__, __TIME__);
-  printDateTime(compiled);
-  Serial.println();
+  Serial.println("Startup. Compilation time: ");  
+  SerialprintlnDateTime(compiled);
 
   // RealTimeClock testen
   if (!rtc.IsDateTimeValid()) {
@@ -110,6 +110,8 @@ void setup() {
   else if (now == compiled) {
       Serial.println("RTC is the same as compile time! (not expected but all is fine)");
   }
+  Serial.println("Startup finished. Now: "); 
+  SerialprintlnDateTime(now); 
 }
 
 
@@ -131,52 +133,51 @@ void loop() {
   // auf Buttonklick reagieren
   if (debouncer.rose()) { // If button state changes from LOW to HIGH
     machineState = static_cast<MachineState>((machineState + 1) % MACHINE_COUNT); // Switch to next State
+    lcd.clear();          
   }
 
   // Bearbeitung gemäß Buttonklick fortsetzen
-  workStates(); // Call workStates() in every loop iteration
-  
+  stateFunctions[machineState]();
+
+  delay(10);
 }
 
 
-void workStates() {
-  for (int i = 0; i < MACHINE_COUNT; i++) {
-    if (machineState == states[i]) {  // Zustand identifizieren
-      stateFunctions[i](); 
-      break;
-    }
-  }
-}
+
 
 
 void workStateFirst() {
-  printDateTime(now);
-  Serial.println();
-  delay(50); 
+  
+  printLCDdateTime(now);
+  //delay(50); 
 }
 
 void workStateSecond() {
-  lcdPrint("  Second screen", "of my menu !!");
+  lcdPrint("Second screen   ", "of my menu (2)  ");
+  //delay(1000);
 }
 
 void workStateThird() {
-  lcdPrint("Hello, world!", "Third screen (3)");
+  lcdPrint("Hello, world!   ", "Third screen (3)");
+  //delay(1000);
 }
 
 void workStateFourth() {
-  lcdPrint("This is screen 4", "Just press btn");
+  lcdPrint("This is screen 4", "Just press btn  ");
+  //delay(1000);
 }
 
 void workStateFifth() {
-  lcdPrint("   Fifth screen", "i2C LCD screen");
+  lcdPrint("Fifth screen of ", "I2C LCD screen  ");
+  //delay(1000);
 }
 
 void workStateSixth() {
-  lcdPrint("THE last screen", "  Sixth and last");
+  lcdPrint("The last screen ", "Sixth and last  ");
+  //delay(1000);
 }
 
-void lcdPrint(const char* line1, const char* line2) {
-  lcd.clear(); // Clear the LCD before printing
+void lcdPrint( const char* line1, const char* line2) {
   lcd.print(line1);
   lcd.setCursor(0, 1);
   lcd.print(line2);
@@ -184,10 +185,27 @@ void lcdPrint(const char* line1, const char* line2) {
 
 #define countof(a) (sizeof(a) / sizeof(a[0]))
 
-void printDateTime(const RtcDateTime& dt){
+void printLCDdateTime(const RtcDateTime& dt){
+  
+    char line1[LCD_COLUMNS];
+    char line2[LCD_COLUMNS];
+
+    char dayW[7][3] = {"So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"};
+    int d = dt.DayOfWeek();  
+    
+    snprintf_P(line1, LCD_COLUMNS, PSTR("    %02u:%02u:%02u"), dt.Hour(), dt.Minute(), dt.Second());
+    snprintf_P(line2, LCD_COLUMNS, PSTR(" %s, %02u.%02u.%04u"), dayW[d] , dt.Day(), dt.Month(), dt.Year());
+
+    lcd.setCursor(0, 0);
+    lcd.print((String)line1);
+    lcd.setCursor(0, 1);
+    lcd.print((String)line2);
+}
+
+
+void SerialprintlnDateTime(const RtcDateTime& dt){
     char datestring[25];
     char daysOfTheWeek[7][4] = {"So","Mo", "Di", "Mi", "Do", "Fr", "Sa"};
-
     snprintf_P(datestring, 
         countof(datestring),
         PSTR("%3s, %02u.%02u.%04u %02u:%02u:%02u"),
@@ -198,13 +216,5 @@ void printDateTime(const RtcDateTime& dt){
         dt.Hour(),
         dt.Minute(),
         dt.Second() );
-    Serial.print(datestring);
-
-    String strg = datestring; 
-    lcd.clear();         
-    lcd.setCursor(0,1);   //Move cursor to character 0 on line 1
-    lcd.print(strg.substring(0, 15));
-    lcd.setCursor(4,0);   //Move cursor to character 4 on line 0
-    lcd.print(strg.substring(16, 25));
-
+    Serial.println(datestring);
 }
