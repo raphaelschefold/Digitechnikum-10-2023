@@ -1,5 +1,5 @@
 #include <Servo.h>
-#include <Bounce2.h>
+#include <OneButton.h>
 
 // Definition der Pins für Servos
 enum ServoPins {
@@ -41,7 +41,7 @@ Servo servo1;
 Servo servo2;
 
 // Button-Objekte erstellen
-Bounce debouncer[NUM_STATES];
+OneButton buttons[NUM_STATES];
 
 // Aktueller Zustand
 States currentState = Z1;
@@ -55,38 +55,9 @@ int targetServoAngles[] = {0, 0};
 // Schrittgröße für die Servowinkeländerung
 #define ANGLE_STEP 2
 
-void setup() {
-  // Servos an den entsprechenden Pins befestigen
-  servo1.attach(SP1);
-  servo2.attach(SP2);
-
-  // Buttons initialisieren und den Input-Pullup aktivieren
-  for (int i = 0; i < NUM_STATES; i++) {
-    pinMode(i + BP1, INPUT_PULLUP);
-    debouncer[i].attach(i + BP1);
-    debouncer[i].interval(10);
-  }
-
-  // Anfangszustand einstellen
-  updateServoAngles();
-}
-
-void loop() {
-  // Buttons entprellen und Zustandswechsel überprüfen
-  for (int i = 0; i < NUM_STATES; i++) {
-    debouncer[i].update();
-    if (debouncer[i].fell()) {
-      currentState = (States)i;
-      updateState(currentState);
-    }
-  }
-
-  // Winkeländerung für die Servos
-  updateServoAngles();
-}
-
 // Funktion zur Aktualisierung des Zustands
 void updateState(States state) {
+  currentState = state;
   switch (state) {
     case Z1:
       targetServoAngles[0] = servo1Angles[0];
@@ -125,4 +96,40 @@ void updateServoAngles() {
       servo.write(currentServoAngles[i]);
     }
   }
+}
+
+// Funktion, die aufgerufen wird, wenn ein Button geklickt wird
+void onButtonClick(void *state) {
+  States s = *(States *)state;
+  updateState(s);
+}
+
+void setup() {
+  // Servos an den entsprechenden Pins befestigen
+  servo1.attach(SP1);
+  servo2.attach(SP2);
+
+  // Buttons initialisieren
+  for (int i = 0; i < NUM_STATES; i++) {
+    buttons[i] = OneButton(i + BP1, true); // true für Input-Pullup
+  }
+
+  // Attach Click-Funktion für alle Buttons
+  for (int i = 0; i < NUM_STATES; i++) {
+    States state = (States)i; // Hier wird der aktuelle Zustand für diesen Button gespeichert
+    buttons[i].attachClick(onButtonClick, &state);
+  }
+
+  // Anfangszustand einstellen
+  updateState(currentState);
+}
+
+void loop() {
+  // Buttons aktualisieren
+  for (int i = 0; i < NUM_STATES; i++) {
+    buttons[i].tick();
+  }
+
+  // Winkeländerung für die Servos
+  updateServoAngles();
 }
