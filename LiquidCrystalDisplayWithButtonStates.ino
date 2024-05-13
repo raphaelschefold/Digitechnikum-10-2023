@@ -33,7 +33,7 @@ void setup() {
   lcd.backlight();
   pinMode(buttonPin, INPUT_PULLUP); // Set button pin as input with internal pull-up resistor
   debouncer.attach(buttonPin);
-  debouncer.interval(5); // Debounce interval in milliseconds
+  debouncer.interval(10); // Debounce interval in milliseconds
 }
 
 void loop() {
@@ -44,6 +44,8 @@ void loop() {
   }
 
   workStates(); // Call workStates() in every loop iteration
+
+  delay(10); // Entprellen des Buttons benötigt etwas Zeit. Warten zum Strom sparen.  
 }
 
 void workStates() {
@@ -96,7 +98,8 @@ void workStateSixth() {
 
 
 void lcdPrint(const char* line1, const char* line2) {
-  lcd.clear(); // Clear the LCD before printing
+  //lcd.clear(); //  clearing the LCD before printing makes the display flickering
+  lcd.setCursor(0, 0); 
   lcd.print(line1);
   lcd.setCursor(0, 1);
   lcd.print(line2);
