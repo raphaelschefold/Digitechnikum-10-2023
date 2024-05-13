@@ -79,7 +79,7 @@ void setup() {
   // RealTimeClock starten
   rtc.Begin();
   RtcDateTime compiled = RtcDateTime(__DATE__, __TIME__);
-  Serial.println("Startup. Compilation time: ");  
+  Serial.println("START SETUP. Compilation time: ");  
   SerialprintlnDateTime(compiled);
 
   // RealTimeClock testen
@@ -87,12 +87,10 @@ void setup() {
       Serial.println("RTC lost confidence in the DateTime!");
       rtc.SetDateTime(compiled);
   }
-
   if (rtc.GetIsWriteProtected()){
       Serial.println("RTC was write protected, enabling writing now");
       rtc.SetIsWriteProtected(false);
   }
-
   if (!rtc.GetIsRunning()){
       Serial.println("RTC was not actively running, starting now");
       rtc.SetIsRunning(true);
@@ -139,15 +137,12 @@ void loop() {
   // Bearbeitung gemäß Buttonklick fortsetzen
   stateFunctions[machineState]();
 
+  // ganz kurz warten zum Strom sparen
   delay(10);
 }
 
 
-
-
-
 void workStateFirst() {
-  
   printLCDdateTime(now);
   //delay(50); 
 }
@@ -177,32 +172,32 @@ void workStateSixth() {
   //delay(1000);
 }
 
+// Zwei Zeilen auf LCD ausgeben
 void lcdPrint( const char* line1, const char* line2) {
+  lcd.setCursor(0, 0);
   lcd.print(line1);
   lcd.setCursor(0, 1);
   lcd.print(line2);
 }
 
-#define countof(a) (sizeof(a) / sizeof(a[0]))
-
+// Uhrzeit und Datum auf LCD
 void printLCDdateTime(const RtcDateTime& dt){
-  
     char line1[LCD_COLUMNS];
     char line2[LCD_COLUMNS];
-
     char dayW[7][3] = {"So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"};
     int d = dt.DayOfWeek();  
-    
     snprintf_P(line1, LCD_COLUMNS, PSTR("    %02u:%02u:%02u"), dt.Hour(), dt.Minute(), dt.Second());
     snprintf_P(line2, LCD_COLUMNS, PSTR(" %s, %02u.%02u.%04u"), dayW[d] , dt.Day(), dt.Month(), dt.Year());
-
     lcd.setCursor(0, 0);
     lcd.print((String)line1);
     lcd.setCursor(0, 1);
     lcd.print((String)line2);
 }
 
+// Präcompiler Hilfsfunktion 
+#define countof(a) (sizeof(a) / sizeof(a[0]))
 
+// Uhrzeit und Datum auf seriellem Monitor
 void SerialprintlnDateTime(const RtcDateTime& dt){
     char datestring[25];
     char daysOfTheWeek[7][4] = {"So","Mo", "Di", "Mi", "Do", "Fr", "Sa"};
