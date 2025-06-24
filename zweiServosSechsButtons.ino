@@ -42,6 +42,8 @@ Servo servo2;
 
 // Button-Objekte erstellen
 OneButton buttons[NUM_STATES];
+// Array zum Speichern des Zustands pro Button
+States buttonStates[NUM_STATES];
 
 // Aktueller Zustand
 States currentState = Z1;
@@ -109,15 +111,11 @@ void setup() {
   servo1.attach(SP1);
   servo2.attach(SP2);
 
-  // Buttons initialisieren
+  // Buttons initialisieren und Callback registrieren
   for (int i = 0; i < NUM_STATES; i++) {
     buttons[i] = OneButton(i + BP1, true); // true für Input-Pullup
-  }
-
-  // Attach Click-Funktion für alle Buttons
-  for (int i = 0; i < NUM_STATES; i++) {
-    States state = (States)i; // Hier wird der aktuelle Zustand für diesen Button gespeichert
-    buttons[i].attachClick(onButtonClick, &state);
+    buttonStates[i] = static_cast<States>(i);
+    buttons[i].attachClick(onButtonClick, &buttonStates[i]);
   }
 
   // Anfangszustand einstellen
